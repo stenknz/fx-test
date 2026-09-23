@@ -344,6 +344,8 @@ def main():
     ap.add_argument("--size", type=float, default=None,
                     help="IG deal size for live orders (default: market minimum)")
     args = ap.parse_args()
+    if os.environ.get("LIVE", "") == "1":
+        args.live = True  # container-friendly switch (Portainer env var)
 
     with open(args.config) as f:
         cfg = json.load(f)
