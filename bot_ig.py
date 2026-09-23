@@ -132,10 +132,29 @@ def cycle(cfg, client, epics, state, tf, tw, ef, ew, warned, live, fixed_size):
         try:
             bid, offer = client.snapshot(epic)
             price = (bid + offer) / 2
-            bars = client.prices(epic, "HOUR", 60)
         except IGError as e:
-            lines.append(f"{sym:<10} IG fetch failed: {e}")
+            lines.append(f"{sym:<10} snapshot failed: {e}")
             continue
+        # Hourly bars only change when a new hour closes: serve from cache
+        # and refetch at most once per hour. IG caps historical-data calls
+        # tightly; refetching 60 bars every 10 min burns the weekly allowance
+        # in about a day. Snapshots (above) are unaffected by that cap.
+        hour_id = int(now // 3600)
+        bcache = state.setdefault("bars", {})
+        centry = bcache.get(sym)
+        if centry and centry["hour"] == hour_id:
+            bars = centry["bars"]
+        else:
+            try:
+                bars = client.prices(epic, "HOUR", 30)
+            except IGError as e:
+                if centry:
+                    bars = centry["bars"]
+                    lines.append(f"{sym:<10} bars failed, using cache")
+                else:
+                    lines.append(f"{sym:<10} IG bars failed: {e}")
+                    continue
+            bcache[sym] = {"hour": hour_id, "bars": bars}
 
         px = fmt_price(sym, price)
         pos = state["positions"].get(sym)
