@@ -73,6 +73,19 @@ def resolve_all(client, pairs):
     return out
 
 
+def record_close(state, tw, sym, pos, xp, reason, kind, nzdusd):
+    """Book a paper close: balance, counters, CSV row. Returns pnl_nzd."""
+    p_nzd = pnl(kind, pos["entry"], xp, pos["d"], pos["units"]) / nzdusd
+    state["balance"] += p_nzd
+    state["closed"] += 1
+    state["closed_pnl"] += p_nzd
+    tw.writerow([utc_now(), sym, "close",
+                 "long" if pos["d"] > 0 else "short",
+                 fmt_price(sym, xp), f"{pos['units']:.2f}",
+                 f"{p_nzd:.2f}", f"{state['balance']:.2f}", reason])
+    return p_nzd
+
+
 def cycle(cfg, client, epics, state, tf, tw, ef, ew, warned, live, fixed_size):
     P, R = cfg["strategy"], cfg["risk"]
     dur = 3600  # hourly bars
@@ -152,7 +165,33 @@ def cycle(cfg, client, epics, state, tf, tw, ef, ew, warned, live, fixed_size):
                     bars = centry["bars"]
                     lines.append(f"{sym:<10} bars failed, using cache")
                 else:
-                    lines.append(f"{sym:<10} IG bars failed: {e}")
+                    # No bars: no signals possible, but stop/target exits
+                    # only need the snapshot price — keep managing these.
+                    hpos = state["positions"].get(sym)
+                    if hpos and hpos.get("stop") is not None:
+                        d = hpos["d"]
+                        pxs = fmt_price(sym, price)
+                        hit_stop = (price <= hpos["stop"] if d > 0
+                                    else price >= hpos["stop"])
+                        hit_tp = (price >= hpos["target"] if d > 0
+                                  else price <= hpos["target"])
+                        if hit_stop or hit_tp:
+                            xp = hpos["stop"] if hit_stop else hpos["target"]
+                            reason = "stop" if hit_stop else "target"
+                            p_nzd = record_close(state, tw, sym, hpos, xp,
+                                                 reason, kind, nzdusd)
+                            state["block"][sym] = d
+                            del state["positions"][sym]
+                            lines.append(f"{sym:<10} {pxs} CLOSED "
+                                         f"{reason.upper()} (snapshot) "
+                                         f"pnl={p_nzd:+.2f}")
+                        else:
+                            fl = floating(kind, hpos["entry"], price, d,
+                                          hpos["units"]) / nzdusd
+                            lines.append(f"{sym:<10} {pxs} holding "
+                                         f"(no bars) pnl={fl:+.2f}")
+                    else:
+                        lines.append(f"{sym:<10} IG bars failed: {e}")
                     continue
             bcache[sym] = {"hour": hour_id, "bars": bars}
 
@@ -193,15 +232,8 @@ def cycle(cfg, client, epics, state, tf, tw, ef, ew, warned, live, fixed_size):
             if xp is None and d_sig != 0 and d_sig != d:
                 xp, reason = price, "signal_flip"
             if xp is not None:
-                p_usd = pnl(kind, pos["entry"], xp, d, pos["units"])
-                p_nzd = p_usd / nzdusd
-                state["balance"] += p_nzd
-                state["closed"] += 1
-                state["closed_pnl"] += p_nzd
-                tw.writerow([utc_now(), sym, "close",
-                             "long" if d > 0 else "short",
-                             fmt_price(sym, xp), f"{pos['units']:.2f}",
-                             f"{p_nzd:.2f}", f"{state['balance']:.2f}", reason])
+                p_nzd = record_close(state, tw, sym, pos, xp, reason,
+                                     kind, nzdusd)
                 if live and pos.get("deal_id"):
                     try:
                         direction = "SELL" if d > 0 else "BUY"
@@ -349,7 +381,7 @@ def seed_from_log(state):
             state["balance"] = float(rows[-1].get("balance_nzd") or state["balance"])
         except ValueError:
             pass
-    return n
+    return len(state["positions"])
 
 
 def main():
