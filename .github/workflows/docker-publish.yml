@@ -5,7 +5,7 @@
 # github.com/stenknz/fx-test → Settings → Secrets and variables → Actions:
 #   DOCKERHUB_USERNAME = your Docker Hub username
 #   DOCKERHUB_TOKEN    = the access token (read+write scope)
-# After that, every `git push` rebuilds stenknz/fx-bot:latest automatically.
+# After that, every `git push` rebuilds the Docker Hub image automatically.
 # On the NAS: Portainer → Containers → fx-bot → Recreate + ✔ Re-pull image.
 name: Build and push to Docker Hub
 
@@ -40,4 +40,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/fx-bot:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/fx-test:latest

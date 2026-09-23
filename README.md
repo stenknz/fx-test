@@ -86,12 +86,9 @@ port 8082 beyond your home network / Tailscale.
 
 ## NAS 24/7 (Asustor + Portainer)
 
-1. Copy this folder to `/volume1/Docker/fx-bot` on the NAS.
-2. SSH into the NAS and build + start it:
-   `cd /volume1/Docker/fx-bot && docker compose up -d --build`
-   (Portainer Stacks can't build images, so the command line does this bit;
-   Portainer still shows and manages the container afterwards.)
-   Set the three `IG_*` env vars (demo values only) before deploying.
-3. Dashboard at `http://<nas-ip>:8082`, logs in `./data`.
-4. For demo-money orders later: append `--live` to the bot command in
+1. In Portainer → Stacks → Add stack, paste the services block from
+   `docker-compose.yml` (prebuilt image `stenknz/fx-test:latest` — no build,
+   no SSH). Set the three `IG_*` env vars (demo values only).
+2. Deploy. Dashboard at `http://<nas-ip>:8082`, logs in `./data`.
+3. For demo-money orders later: append `--live` to the bot command in
    the `Dockerfile` CMD — no other change needed.

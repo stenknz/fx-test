@@ -1,15 +1,14 @@
-# fx-bot — Asustor NAS deploy (Docker Compose).
-# NOTE: Portainer Stacks do NOT build images, so deploy from the NAS command
-# line over SSH — not by pasting this into Stacks. Portainer will still show
-# and manage the running container afterwards.
-# 1. Copy this project folder to /volume1/Docker/fx-bot on the NAS.
-# 2. SSH in and run: cd /volume1/Docker/fx-bot && docker compose up -d --build
-# 3. Fill in the DEMO IG_API_KEY / IG_USERNAME / IG_PASSWORD in the
-#    environment block below first (or export them before step 2).
+# fx-bot — Asustor NAS deploy (prebuilt image, no SSH needed).
+# 1. Copy ONLY this file's services block into Portainer → Stacks → Add stack
+#    (or save as docker-compose.yml). No build step: the image comes ready
+#    from Docker Hub and rebuilds automatically on every git push.
+# 2. Set the DEMO IG_API_KEY / IG_USERNAME / IG_PASSWORD in the environment
+#    block (or Portainer's Environment variables tab).
+# 3. Deploy. On code updates: Containers → fx-bot → Recreate + ✔ Re-pull image.
 # Dashboard: http://<nas-ip>:8082 (LAN + Tailscale). Logs persist in ./data.
 services:
   fx-bot:
-    build: /volume1/Docker/fx-bot
+    image: stenknz/fx-test:latest
     container_name: fx-bot
     restart: unless-stopped
     ports:
