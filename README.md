@@ -90,5 +90,5 @@ port 8082 beyond your home network / Tailscale.
    `docker-compose.yml` (prebuilt image `stenknz/fx-test:latest` — no build,
    no SSH). Set the three `IG_*` env vars (demo values only).
 2. Deploy. Dashboard at `http://<nas-ip>:8082`, logs in `./data`.
-3. For demo-money orders later: append `--live` to the bot command in
-   the `Dockerfile` CMD — no other change needed.
+3. For demo-money orders later: add env var `LIVE=1` to the stack and
+   redeploy (logs show `LIVE DEMO ORDERS`). Remove it to return to paper.
