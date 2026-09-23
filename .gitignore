@@ -1,0 +1,6 @@
+# Logs, caches, credentials-adjacent files never get committed.
+*.csv
+__pycache__/
+*.pyc
+*.odt
+.~lock.*

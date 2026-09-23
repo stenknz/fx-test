@@ -1,0 +1,31 @@
+{
+  "account": {
+    "currency": "NZD",
+    "starting_balance": 20000
+  },
+  "pairs": ["EURUSD=X", "GBPUSD=X", "AUDUSD=X", "NZDUSD=X", "USDJPY=X"],
+  "strategy": {
+    "ema_fast": 9,
+    "ema_slow": 21,
+    "atr_period": 14,
+    "atr_stop_mult": 1.5,
+    "atr_target_mult": 2.5
+  },
+  "risk": {
+    "risk_percent": 1.0,
+    "max_open_positions": 2,
+    "max_leverage": 5
+  },
+  "execution": {
+    "spread_pips": 1.0
+  },
+  "backtest": {
+    "interval": "1h",
+    "range": "1y"
+  },
+  "live": {
+    "interval": "1h",
+    "range": "5d",
+    "poll_seconds": 600
+  }
+}

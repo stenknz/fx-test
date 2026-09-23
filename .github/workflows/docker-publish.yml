@@ -1,0 +1,43 @@
+# Builds the NAS image and pushes it to Docker Hub on every push to main.
+# One-time setup (in a browser): create a Docker Hub access token
+# (hub.docker.com → Account Settings → Security → New Access Token, Read &
+# Write), then add two repository secrets at
+# github.com/stenknz/fx-test → Settings → Secrets and variables → Actions:
+#   DOCKERHUB_USERNAME = your Docker Hub username
+#   DOCKERHUB_TOKEN    = the access token (read+write scope)
+# After that, every `git push` rebuilds stenknz/fx-bot:latest automatically.
+# On the NAS: Portainer → Containers → fx-bot → Recreate + ✔ Re-pull image.
+name: Build and push to Docker Hub
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - bot_ig.py
+      - dashboard.py
+      - ig_client.py
+      - strategy.py
+      - trading.py
+      - fxdata.py
+      - check_ig.py
+      - close_paper.py
+      - config.json
+      - strategies/**
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/fx-bot:latest

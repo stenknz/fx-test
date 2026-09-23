@@ -1,0 +1,11 @@
+# Keep the image lean: runtime files only. Logs, caches, backtest
+# outputs and anything credential-adjacent never ship.
+*.csv
+__pycache__/
+*.pyc
+*.odt
+.~lock.*
+ig_demo_template.json
+backtest*.py
+bot.py
+.git/
